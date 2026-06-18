@@ -24,6 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { SUBJECT_TYPES } from "@/lib/grading";
+import { PinKeypad } from "@/components/PinKeypad";
 
 export const Route = createFileRoute("/_authenticated/sections/")({
   component: SectionsPage,
@@ -58,6 +59,9 @@ function SectionsPage() {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<SectionInput>(empty);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; label: string } | null>(null);
+  const [pin, setPin] = useState("");
+  const [verifying, setVerifying] = useState(false);
 
   const { data: sections = [] } = useQuery({
     queryKey: ["sections"],
@@ -124,8 +128,33 @@ function SectionsPage() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["sections"] });
       toast.success("Deleted");
+      setDeleteTarget(null);
+      setPin("");
     },
+    onError: (e: Error) => toast.error(e.message),
   });
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    if (pin.length !== 6) {
+      toast.error("Enter your 6-digit PIN");
+      return;
+    }
+    setVerifying(true);
+    const { data: u } = await supabase.auth.getUser();
+    if (!u.user?.email) { setVerifying(false); return; }
+    const { error } = await supabase.auth.signInWithPassword({
+      email: u.user.email,
+      password: pin,
+    });
+    setVerifying(false);
+    if (error) {
+      toast.error("Incorrect PIN");
+      setPin("");
+      return;
+    }
+    del.mutate(deleteTarget.id);
+  };
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
@@ -248,7 +277,8 @@ function SectionsPage() {
                 size="sm"
                 variant="outline"
                 onClick={() => {
-                  if (confirm("Delete this section and all its data?")) del.mutate(s.id);
+                  setPin("");
+                  setDeleteTarget({ id: s.id, label: `Grade ${s.grade_level} - ${s.section_name}` });
                 }}
               >
                 <Trash2 className="h-4 w-4" />
@@ -262,6 +292,30 @@ function SectionsPage() {
           ))
         )}
       </div>
+
+      <Dialog
+        open={!!deleteTarget}
+        onOpenChange={(o) => { if (!o) { setDeleteTarget(null); setPin(""); } }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Section</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            You are about to permanently delete <strong>{deleteTarget?.label}</strong> and all its students, assessments, and scores. Enter your 6-digit PIN to confirm.
+          </p>
+          <PinKeypad value={pin} onChange={setPin} />
+          <DialogFooter>
+            <Button
+              variant="destructive"
+              onClick={confirmDelete}
+              disabled={verifying || del.isPending || pin.length !== 6}
+            >
+              {verifying || del.isPending ? "Deleting..." : "Permanently Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

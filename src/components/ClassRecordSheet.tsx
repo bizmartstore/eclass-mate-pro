@@ -238,7 +238,7 @@ export function ClassRecordSheet({
               key={String(label)}
               className="border-r border-black last:border-r-0 px-2 py-1.5 min-h-[36px]"
             >
-              <div className="font-bold text-[9px]">{label}</div>
+              <div className="font-bold text-[9px]">{String(label)}</div>
               <div className="uppercase mt-0.5">{String(value ?? "")}</div>
             </div>
           ))}
