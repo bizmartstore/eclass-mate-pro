@@ -42,7 +42,7 @@ export function AppShell() {
   };
 
   const isActive = (to: string) =>
-    to === "/" ? pathname === "/" : pathname.startsWith(to);
+    to === "/dashboard" ? pathname === "/dashboard" : pathname.startsWith(to);
 
   return (
     <div className="min-h-screen flex w-full bg-muted/30">
