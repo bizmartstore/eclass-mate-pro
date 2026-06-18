@@ -1,5 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import { isLovableBuild } from "./build-target.mjs";
 
 const root = process.cwd();
 const distDir = path.join(root, "dist");
@@ -14,6 +15,11 @@ async function exists(filePath) {
   } catch {
     return false;
   }
+}
+
+if (isLovableBuild()) {
+  console.log("[pages-dist] Skipped — Lovable uses nitro Worker output in dist/.");
+  process.exit(0);
 }
 
 if (!(await exists(clientDir))) {
@@ -43,4 +49,4 @@ if (!(await exists(assetsDir))) {
 // Cloudflare Pages serves SPAs natively when no 404.html exists at the root.
 // Do NOT add a /* /index.html 200 _redirects rule — it breaks /assets/* on Pages.
 
-console.log("[pages-dist] Prepared Cloudflare Pages output in dist/");
+console.log("[pages-dist] Prepared Cloudflare Pages static output in dist/");

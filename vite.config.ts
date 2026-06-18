@@ -6,17 +6,25 @@
 // You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
+const isLovable =
+  process.env.LOVABLE_SANDBOX === "1" || !!process.env.DEV_SERVER__PROJECT_PATH;
+
+// Lovable: nitro + Cloudflare Worker bundle (default in sandbox).
+// Cloudflare Pages / local static: Vite-only SPA with dist/index.html.
 export default defineConfig({
-  // Pages static hosting — never bundle for Cloudflare Workers.
-  nitro: false,
+  ...(isLovable ? {} : { nitro: false }),
   tanstackStart: {
     // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
     server: { entry: "server" },
-    spa: {
-      enabled: true,
-      prerender: {
-        outputPath: "/index.html",
-      },
-    },
+    ...(!isLovable
+      ? {
+          spa: {
+            enabled: true,
+            prerender: {
+              outputPath: "/index.html",
+            },
+          },
+        }
+      : {}),
   },
 });
