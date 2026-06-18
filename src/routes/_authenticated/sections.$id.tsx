@@ -622,7 +622,7 @@ function TermGrid({
                       {stu.last_name}, {stu.first_name}
                     </td>
                     {(["WW", "PT", "ST"] as Category[]).filter((c) => c !== "ST" || weights.st > 0).map((cat) => (
-                      <>
+                      <Fragment key={cat}>
                         {byCat[cat].map((a) => (
                           <td key={a.id} className={`${CAT_BG[cat]} border p-0`}>
                             <ScoreCell
@@ -638,7 +638,7 @@ function TermGrid({
                         <td className={`${CAT_BG[cat]} border px-1 text-center font-mono`}>
                           {r[cat.toLowerCase() as "ww" | "pt" | "st"].ws.toFixed(2)}
                         </td>
-                      </>
+                      </Fragment>
                     ))}
                     <td className="bg-primary/5 border px-2 text-center font-mono">{r.initial.toFixed(2)}</td>
                     <td className="bg-primary/5 border px-2 text-center font-bold">{r.transmuted}</td>
