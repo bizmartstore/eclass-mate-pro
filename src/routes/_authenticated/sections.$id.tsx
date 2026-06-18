@@ -576,6 +576,50 @@ function TermGrid({
     [qc, sectionId, term],
   );
 
+  const activeCats = (["WW", "PT", "ST"] as Category[]).filter((c) => c !== "ST" || weights.st > 0);
+  const catWeight: Record<Category, number> = { WW: weights.ww, PT: weights.pt, ST: weights.st };
+  const totalCols = 1 + activeCats.reduce((acc, c) => acc + byCat[c].length + 2, 0) + 3;
+
+  const males = (students as any[]).filter((s) => (s.sex ?? "M").toUpperCase() === "M");
+  const females = (students as any[]).filter((s) => (s.sex ?? "").toUpperCase() === "F");
+
+  const renderStudentRow = (stu: any, idx: number) => {
+    const sScores = scoreMap[stu.id] ?? {};
+    const r = computeTerm(sScores, byCat, weights, trans);
+    return (
+      <tr key={stu.id} className="hover:bg-muted/30">
+        <td className="sticky left-0 z-10 bg-card border px-2 py-1 font-medium">
+          <span className="text-muted-foreground mr-2">{idx + 1}</span>
+          {stu.last_name}, {stu.first_name}
+        </td>
+        {activeCats.map((cat) => (
+          <Fragment key={cat}>
+            {byCat[cat].map((a) => (
+              <td key={a.id} className={`${CAT_BG[cat]} border p-0`}>
+                <ScoreCell
+                  initial={sScores[a.id] ?? null}
+                  max={a.highest_score}
+                  onSave={(v) => saveScore(stu.id, a.id, v)}
+                />
+              </td>
+            ))}
+            <td className={`${CAT_BG[cat]} border px-1 text-center font-mono`}>
+              {r[cat.toLowerCase() as "ww" | "pt" | "st"].ps.toFixed(1)}
+            </td>
+            <td className={`${CAT_BG[cat]} border px-1 text-center font-mono`}>
+              {r[cat.toLowerCase() as "ww" | "pt" | "st"].ws.toFixed(2)}
+            </td>
+          </Fragment>
+        ))}
+        <td className="bg-primary/5 border px-2 text-center font-mono">{r.initial.toFixed(2)}</td>
+        <td className="bg-primary/5 border px-2 text-center font-bold">{r.transmuted}</td>
+        <td className={`bg-primary/5 border px-2 text-center text-xs ${r.remarks === "Failed" ? "text-destructive font-medium" : "text-emerald-700"}`}>
+          {r.remarks}
+        </td>
+      </tr>
+    );
+  };
+
   return (
     <div className="mt-4 space-y-4">
       <div className="flex items-center gap-2 flex-wrap">
@@ -594,63 +638,70 @@ function TermGrid({
           <table className="text-xs border-collapse">
             <thead>
               <tr>
-                <th className="sticky left-0 z-10 bg-muted px-2 py-2 text-left border min-w-[180px]">Student</th>
-                {(["WW", "PT", "ST"] as Category[]).filter((c) => c !== "ST" || weights.st > 0).map((cat) => (
+                <th rowSpan={2} className="sticky left-0 z-10 bg-muted px-2 py-2 text-left border min-w-[180px]">LEARNERS' NAMES</th>
+                {activeCats.map((cat) => (
+                  <th
+                    key={cat}
+                    colSpan={byCat[cat].length + 2}
+                    className={`${CAT_BG[cat]} border px-2 py-1 text-center font-bold text-[11px] uppercase`}
+                  >
+                    {cat === "WW" && `Written / Oral Works (${Math.round(weights.ww * 100)}%)`}
+                    {cat === "PT" && `Product / Performance Tasks (${Math.round(weights.pt * 100)}%)`}
+                    {cat === "ST" && `Summative Tests & Term Examination (${Math.round(weights.st * 100)}%)`}
+                  </th>
+                ))}
+                <th rowSpan={2} className="bg-primary/10 border px-2 py-1 min-w-[60px]">Initial<br/>Grade</th>
+                <th rowSpan={2} className="bg-primary/10 border px-2 py-1 min-w-[60px]">Transmuted<br/>Grade</th>
+                <th rowSpan={2} className="bg-primary/10 border px-2 py-1 min-w-[80px]">Letter<br/>Grade</th>
+              </tr>
+              <tr>
+                {activeCats.map((cat) => (
                   <Fragment key={cat}>
-                    {byCat[cat].map((a) => (
-                      <th key={a.id} className={`${CAT_BG[cat]} border px-1 py-1 min-w-[70px]`}>
-                        <div className="font-medium text-[11px] truncate max-w-[80px]" title={a.name}>{a.name}</div>
-                        <div className="text-muted-foreground text-[10px]">/{a.highest_score}</div>
-                        <button onClick={() => { if (confirm("Delete column?")) delAssessment.mutate(a.id); }} className="text-destructive text-[10px] hover:underline">×</button>
+                    {byCat[cat].map((a, i) => (
+                      <th key={a.id} className={`${CAT_BG[cat]} border px-1 py-1 min-w-[50px]`}>
+                        <div className="font-medium text-[11px]" title={a.name}>{i + 1}</div>
+                        <button onClick={() => { if (confirm(`Delete ${a.name}?`)) delAssessment.mutate(a.id); }} className="text-destructive text-[10px] hover:underline">×</button>
                       </th>
                     ))}
                     <th className={`${CAT_BG[cat]} border px-1 py-1 min-w-[50px] text-[10px]`}>PS</th>
                     <th className={`${CAT_BG[cat]} border px-1 py-1 min-w-[50px] text-[10px]`}>WS</th>
                   </Fragment>
                 ))}
-                <th className="bg-primary/10 border px-2 py-1 min-w-[60px]">Initial</th>
-                <th className="bg-primary/10 border px-2 py-1 min-w-[60px]">Final</th>
-                <th className="bg-primary/10 border px-2 py-1 min-w-[120px]">Remarks</th>
+              </tr>
+              <tr className="bg-muted/60 font-semibold">
+                <td className="sticky left-0 z-10 bg-muted/60 border px-2 py-1 text-[11px]">HIGHEST POSSIBLE SCORE</td>
+                {activeCats.map((cat) => {
+                  const totalHPS = byCat[cat].reduce((s, a) => s + Number(a.highest_score || 0), 0);
+                  return (
+                    <Fragment key={cat}>
+                      {byCat[cat].map((a) => (
+                        <td key={a.id} className={`${CAT_BG[cat]} border px-1 py-1 text-center font-mono`}>
+                          {a.highest_score}
+                        </td>
+                      ))}
+                      <td className={`${CAT_BG[cat]} border px-1 py-1 text-center font-mono`}>{totalHPS}</td>
+                      <td className={`${CAT_BG[cat]} border px-1 py-1 text-center font-mono`}>{Math.round(catWeight[cat] * 100)}%</td>
+                    </Fragment>
+                  );
+                })}
+                <td colSpan={3} className="bg-primary/10 border" />
               </tr>
             </thead>
             <tbody>
-              {students.map((stu: any) => {
-                const sScores = scoreMap[stu.id] ?? {};
-                const r = computeTerm(sScores, byCat, weights, trans);
-                return (
-                  <tr key={stu.id} className="hover:bg-muted/30">
-                    <td className="sticky left-0 z-10 bg-card border px-2 py-1 font-medium">
-                      {stu.last_name}, {stu.first_name}
-                    </td>
-                    {(["WW", "PT", "ST"] as Category[]).filter((c) => c !== "ST" || weights.st > 0).map((cat) => (
-                      <Fragment key={cat}>
-                        {byCat[cat].map((a) => (
-                          <td key={a.id} className={`${CAT_BG[cat]} border p-0`}>
-                            <ScoreCell
-                              initial={sScores[a.id] ?? null}
-                              max={a.highest_score}
-                              onSave={(v) => saveScore(stu.id, a.id, v)}
-                            />
-                          </td>
-                        ))}
-                        <td className={`${CAT_BG[cat]} border px-1 text-center font-mono`}>
-                          {r[cat.toLowerCase() as "ww" | "pt" | "st"].ps.toFixed(1)}
-                        </td>
-                        <td className={`${CAT_BG[cat]} border px-1 text-center font-mono`}>
-                          {r[cat.toLowerCase() as "ww" | "pt" | "st"].ws.toFixed(2)}
-                        </td>
-                      </Fragment>
-                    ))}
-                    <td className="bg-primary/5 border px-2 text-center font-mono">{r.initial.toFixed(2)}</td>
-                    <td className="bg-primary/5 border px-2 text-center font-bold">{r.transmuted}</td>
-                    <td className={`bg-primary/5 border px-2 text-center text-xs ${r.remarks === "Failed" ? "text-destructive font-medium" : "text-emerald-700"}`}>
-                      {r.remarks}
-                    </td>
-                  </tr>
-                );
-              })}
+              {!!males.length && (
+                <tr className="bg-blue-100">
+                  <td colSpan={totalCols} className="border px-2 py-1 font-bold text-[11px] uppercase tracking-wide">Male</td>
+                </tr>
+              )}
+              {males.map((stu, i) => renderStudentRow(stu, i))}
+              {!!females.length && (
+                <tr className="bg-pink-100">
+                  <td colSpan={totalCols} className="border px-2 py-1 font-bold text-[11px] uppercase tracking-wide">Female</td>
+                </tr>
+              )}
+              {females.map((stu, i) => renderStudentRow(stu, i))}
               {!students.length && (
-                <tr><td colSpan={20} className="text-center text-muted-foreground py-8">Add students first.</td></tr>
+                <tr><td colSpan={totalCols} className="text-center text-muted-foreground py-8">Add students first.</td></tr>
               )}
             </tbody>
           </table>
