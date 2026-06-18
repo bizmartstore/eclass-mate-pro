@@ -142,3 +142,21 @@
     color: var(--color-foreground);
   }
 }
+
+/* Globally hide the Lovable badge */
+#lovable-badge,
+[id^="lovable-badge"],
+[class*="lovable-badge"],
+a[href*="lovable.dev"],
+a[href*="lovable.app/?utm"],
+iframe[src*="lovable.dev/badge"] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  position: absolute !important;
+  left: -9999px !important;
+}
+
