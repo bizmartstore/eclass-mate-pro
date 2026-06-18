@@ -172,11 +172,11 @@ export function ClassRecordSheet({
       {/* DepEd header */}
       <div className="border-2 border-black">
         <div className="flex items-start justify-between px-3 py-2 border-b border-black">
-          <div className="w-16 h-16 border border-black/30 rounded-full flex items-center justify-center text-[8px] text-center text-muted-foreground print:text-gray-500">
-            DepEd
-            <br />
-            Seal
-          </div>
+          <img
+            src="/images/deped-seal.png"
+            alt="DepEd Seal"
+            className="h-16 w-16 shrink-0 object-contain"
+          />
           <div className="flex-1 text-center px-4">
             <div className="text-sm font-bold uppercase tracking-wide">
               Strengthened Senior High School Class Record
@@ -185,25 +185,42 @@ export function ClassRecordSheet({
               (Pursuant to DepEd Order 15 series of 2026)
             </div>
           </div>
-          <div className="w-16 h-16 border border-black/30 flex items-center justify-center text-[9px] font-bold text-primary">
-            DepEd
-          </div>
+          <img
+            src="/images/deped-logo.png"
+            alt="DepEd"
+            className="h-16 w-auto shrink-0 object-contain"
+          />
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-5 border-b border-black text-[10px]">
-          {[
-            ["REGION", section.region],
-            ["DIVISION", section.division],
-            ["SCHOOL NAME", section.school_name],
-            ["SCHOOL ID", section.school_id],
-            ["SCHOOL YEAR", section.school_year],
-          ].map(([label, value]) => (
-            <div key={String(label)} className="border-r border-black last:border-r-0 px-2 py-1">
-              <span className="font-bold">{label}: </span>
-              <span className="uppercase">{String(value ?? "")}</span>
-            </div>
-          ))}
-        </div>
+        <table className="w-full border-collapse border-b border-black text-[10px]">
+          <tbody>
+            <tr>
+              <td className={`${cell} font-bold whitespace-nowrap w-[1%]`}>REGION</td>
+              <td className={`${cell} uppercase min-w-[100px]`}>
+                {String(section.region ?? "")}
+              </td>
+              <td className={`${cell} font-bold whitespace-nowrap w-[1%]`}>DIVISION</td>
+              <td className={`${cell} uppercase min-w-[100px]`}>
+                {String(section.division ?? "")}
+              </td>
+              <td
+                rowSpan={2}
+                className={`${cell} font-bold whitespace-nowrap align-middle w-[1%]`}
+              >
+                SCHOOL YEAR
+              </td>
+              <td rowSpan={2} className={`${cell} uppercase align-middle min-w-[80px]`}>
+                {String(section.school_year ?? "")}
+              </td>
+            </tr>
+            <tr>
+              <td className={`${cell} font-bold whitespace-nowrap`}>SCHOOL NAME</td>
+              <td className={`${cell} uppercase`}>{String(section.school_name ?? "")}</td>
+              <td className={`${cell} font-bold whitespace-nowrap`}>SCHOOL ID</td>
+              <td className={`${cell} uppercase`}>{String(section.school_id ?? "")}</td>
+            </tr>
+          </tbody>
+        </table>
 
         <div className="grid grid-cols-2 md:grid-cols-6 text-[10px]">
           {[
