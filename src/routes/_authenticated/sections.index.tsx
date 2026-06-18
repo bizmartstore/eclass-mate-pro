@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/select";
 import { SUBJECT_TYPES } from "@/lib/grading";
 
-export const Route = createFileRoute("/_authenticated/sections")({
+export const Route = createFileRoute("/_authenticated/sections/")({
   component: SectionsPage,
 });
 
@@ -48,7 +48,7 @@ const empty: SectionInput = {
   strand: "STEM",
   section_name: "",
   school_year: "2025-2026",
-  semester: "1st Semester",
+  semester: "Term 1",
   adviser: "",
   subject_name: "",
   subject_type: "CORE",
@@ -168,12 +168,13 @@ function SectionsPage() {
               <Field label="School Year">
                 <Input value={form.school_year} onChange={(e) => setForm({ ...form, school_year: e.target.value })} />
               </Field>
-              <Field label="Semester">
+              <Field label="Term">
                 <Select value={form.semester} onValueChange={(v) => setForm({ ...form, semester: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="1st Semester">1st Semester</SelectItem>
-                    <SelectItem value="2nd Semester">2nd Semester</SelectItem>
+                    <SelectItem value="Term 1">Term 1</SelectItem>
+                    <SelectItem value="Term 2">Term 2</SelectItem>
+                    <SelectItem value="Term 3">Term 3</SelectItem>
                   </SelectContent>
                 </Select>
               </Field>

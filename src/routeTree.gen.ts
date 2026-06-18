@@ -13,8 +13,8 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
-import { Route as AuthenticatedSectionsRouteImport } from './routes/_authenticated/sections'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedSectionsIndexRouteImport } from './routes/_authenticated/sections.index'
 import { Route as AuthenticatedSectionsIdRouteImport } from './routes/_authenticated/sections.$id'
 
 const AuthRoute = AuthRouteImport.update({
@@ -36,37 +36,38 @@ const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedSectionsRoute = AuthenticatedSectionsRouteImport.update({
-  id: '/sections',
-  path: '/sections',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedSectionsIndexRoute =
+  AuthenticatedSectionsIndexRouteImport.update({
+    id: '/sections/',
+    path: '/sections/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedSectionsIdRoute = AuthenticatedSectionsIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => AuthenticatedSectionsRoute,
+  id: '/sections/$id',
+  path: '/sections/$id',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
-  '/sections': typeof AuthenticatedSectionsRouteWithChildren
   '/settings': typeof AuthenticatedSettingsRoute
   '/sections/$id': typeof AuthenticatedSectionsIdRoute
+  '/sections/': typeof AuthenticatedSectionsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
-  '/sections': typeof AuthenticatedSectionsRouteWithChildren
   '/settings': typeof AuthenticatedSettingsRoute
   '/sections/$id': typeof AuthenticatedSectionsIdRoute
+  '/sections': typeof AuthenticatedSectionsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -74,9 +75,9 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
-  '/_authenticated/sections': typeof AuthenticatedSectionsRouteWithChildren
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/sections/$id': typeof AuthenticatedSectionsIdRoute
+  '/_authenticated/sections/': typeof AuthenticatedSectionsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -84,20 +85,20 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/dashboard'
-    | '/sections'
     | '/settings'
     | '/sections/$id'
+    | '/sections/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/dashboard' | '/sections' | '/settings' | '/sections/$id'
+  to: '/' | '/auth' | '/dashboard' | '/settings' | '/sections/$id' | '/sections'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/auth'
     | '/_authenticated/dashboard'
-    | '/_authenticated/sections'
     | '/_authenticated/settings'
     | '/_authenticated/sections/$id'
+    | '/_authenticated/sections/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -136,13 +137,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/sections': {
-      id: '/_authenticated/sections'
-      path: '/sections'
-      fullPath: '/sections'
-      preLoaderRoute: typeof AuthenticatedSectionsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
@@ -150,39 +144,35 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/sections/': {
+      id: '/_authenticated/sections/'
+      path: '/sections'
+      fullPath: '/sections/'
+      preLoaderRoute: typeof AuthenticatedSectionsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/sections/$id': {
       id: '/_authenticated/sections/$id'
-      path: '/$id'
+      path: '/sections/$id'
       fullPath: '/sections/$id'
       preLoaderRoute: typeof AuthenticatedSectionsIdRouteImport
-      parentRoute: typeof AuthenticatedSectionsRoute
+      parentRoute: typeof AuthenticatedRouteRoute
     }
   }
 }
 
-interface AuthenticatedSectionsRouteChildren {
-  AuthenticatedSectionsIdRoute: typeof AuthenticatedSectionsIdRoute
-}
-
-const AuthenticatedSectionsRouteChildren: AuthenticatedSectionsRouteChildren = {
-  AuthenticatedSectionsIdRoute: AuthenticatedSectionsIdRoute,
-}
-
-const AuthenticatedSectionsRouteWithChildren =
-  AuthenticatedSectionsRoute._addFileChildren(
-    AuthenticatedSectionsRouteChildren,
-  )
-
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
-  AuthenticatedSectionsRoute: typeof AuthenticatedSectionsRouteWithChildren
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
+  AuthenticatedSectionsIdRoute: typeof AuthenticatedSectionsIdRoute
+  AuthenticatedSectionsIndexRoute: typeof AuthenticatedSectionsIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
-  AuthenticatedSectionsRoute: AuthenticatedSectionsRouteWithChildren,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
+  AuthenticatedSectionsIdRoute: AuthenticatedSectionsIdRoute,
+  AuthenticatedSectionsIndexRoute: AuthenticatedSectionsIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
