@@ -292,6 +292,30 @@ function SectionsPage() {
           ))
         )}
       </div>
+
+      <Dialog
+        open={!!deleteTarget}
+        onOpenChange={(o) => { if (!o) { setDeleteTarget(null); setPin(""); } }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Section</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            You are about to permanently delete <strong>{deleteTarget?.label}</strong> and all its students, assessments, and scores. Enter your 6-digit PIN to confirm.
+          </p>
+          <PinKeypad value={pin} onChange={setPin} />
+          <DialogFooter>
+            <Button
+              variant="destructive"
+              onClick={confirmDelete}
+              disabled={verifying || del.isPending || pin.length !== 6}
+            >
+              {verifying || del.isPending ? "Deleting..." : "Permanently Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
