@@ -1,12 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState, useMemo, useCallback, useEffect, useRef, Fragment } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { toast } from "sonner";
 import {
   Plus,
   Trash2,
   ArrowLeft,
   Save,
+  Printer,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ClassRecordSheet } from "@/components/ClassRecordSheet";
 import {
   computeTerm,
   getWeights,
@@ -62,15 +64,15 @@ function SectionDetail() {
   if (!section) return <div className="p-6">Loading…</div>;
 
   return (
-    <div className="space-y-4 max-w-[1400px] mx-auto">
-      <div className="flex items-center gap-2">
+    <div className="space-y-4 max-w-none mx-auto">
+      <div className="flex items-center gap-2 print:hidden">
         <Button variant="ghost" size="sm" asChild>
           <Link to="/sections">
             <ArrowLeft className="h-4 w-4 mr-1" /> All Sections
           </Link>
         </Button>
       </div>
-      <div>
+      <div className="print:hidden">
         <h1 className="text-2xl md:text-3xl font-bold">
           Grade {section.grade_level} - {section.section_name}
         </h1>
@@ -80,7 +82,7 @@ function SectionDetail() {
       </div>
 
       <Tabs defaultValue="students">
-        <TabsList className="grid grid-cols-3 md:grid-cols-6 w-full">
+        <TabsList className="grid grid-cols-3 md:grid-cols-6 w-full print:hidden">
           <TabsTrigger value="students">Students</TabsTrigger>
           <TabsTrigger value="input">Input Data</TabsTrigger>
           <TabsTrigger value="t1">Term 1</TabsTrigger>
@@ -90,9 +92,9 @@ function SectionDetail() {
         </TabsList>
         <TabsContent value="students"><StudentsTab sectionId={id} /></TabsContent>
         <TabsContent value="input"><InputDataTab section={section} /></TabsContent>
-        <TabsContent value="t1"><TermGrid sectionId={id} term={1} subjectType={section.subject_type as SubjectType} /></TabsContent>
-        <TabsContent value="t2"><TermGrid sectionId={id} term={2} subjectType={section.subject_type as SubjectType} /></TabsContent>
-        <TabsContent value="t3"><TermGrid sectionId={id} term={3} subjectType={section.subject_type as SubjectType} /></TabsContent>
+        <TabsContent value="t1"><TermGrid section={section} term={1} subjectType={section.subject_type as SubjectType} /></TabsContent>
+        <TabsContent value="t2"><TermGrid section={section} term={2} subjectType={section.subject_type as SubjectType} /></TabsContent>
+        <TabsContent value="t3"><TermGrid section={section} term={3} subjectType={section.subject_type as SubjectType} /></TabsContent>
         <TabsContent value="summary"><SummaryTab sectionId={id} subjectType={section.subject_type as SubjectType} /></TabsContent>
       </Tabs>
     </div>
@@ -431,21 +433,17 @@ const CAT_LABEL: Record<Category, string> = {
   PT: "Performance Task",
   ST: "Summative / Term Exam",
 };
-const CAT_BG: Record<Category, string> = {
-  WW: "bg-blue-50",
-  PT: "bg-emerald-50",
-  ST: "bg-amber-50",
-};
 
 function TermGrid({
-  sectionId,
+  section,
   term,
   subjectType,
 }: {
-  sectionId: string;
+  section: Record<string, any>;
   term: number;
   subjectType: SubjectType;
 }) {
+  const sectionId = section.id as string;
   const qc = useQueryClient();
   const weights = getWeights(subjectType);
 
@@ -576,166 +574,39 @@ function TermGrid({
     [qc, sectionId, term],
   );
 
-  const activeCats = (["WW", "PT", "ST"] as Category[]).filter((c) => c !== "ST" || weights.st > 0);
-  const catWeight: Record<Category, number> = { WW: weights.ww, PT: weights.pt, ST: weights.st };
-  const totalCols = 1 + activeCats.reduce((acc, c) => acc + byCat[c].length + 2, 0) + 3;
-
-  const males = (students as any[]).filter((s) => (s.sex ?? "M").toUpperCase() === "M");
-  const females = (students as any[]).filter((s) => (s.sex ?? "").toUpperCase() === "F");
-
-  const renderStudentRow = (stu: any, idx: number) => {
-    const sScores = scoreMap[stu.id] ?? {};
-    const r = computeTerm(sScores, byCat, weights, trans);
-    return (
-      <tr key={stu.id} className="hover:bg-muted/30">
-        <td className="sticky left-0 z-10 bg-card border px-2 py-1 font-medium">
-          <span className="text-muted-foreground mr-2">{idx + 1}</span>
-          {stu.last_name}, {stu.first_name}
-        </td>
-        {activeCats.map((cat) => (
-          <Fragment key={cat}>
-            {byCat[cat].map((a) => (
-              <td key={a.id} className={`${CAT_BG[cat]} border p-0`}>
-                <ScoreCell
-                  initial={sScores[a.id] ?? null}
-                  max={a.highest_score}
-                  onSave={(v) => saveScore(stu.id, a.id, v)}
-                />
-              </td>
-            ))}
-            <td className={`${CAT_BG[cat]} border px-1 text-center font-mono`}>
-              {r[cat.toLowerCase() as "ww" | "pt" | "st"].ps.toFixed(1)}
-            </td>
-            <td className={`${CAT_BG[cat]} border px-1 text-center font-mono`}>
-              {r[cat.toLowerCase() as "ww" | "pt" | "st"].ws.toFixed(2)}
-            </td>
-          </Fragment>
-        ))}
-        <td className="bg-primary/5 border px-2 text-center font-mono">{r.initial.toFixed(2)}</td>
-        <td className="bg-primary/5 border px-2 text-center font-bold">{r.transmuted}</td>
-        <td className={`bg-primary/5 border px-2 text-center text-xs ${r.remarks === "Failed" ? "text-destructive font-medium" : "text-emerald-700"}`}>
-          {r.remarks}
-        </td>
-      </tr>
-    );
-  };
-
   return (
     <div className="mt-4 space-y-4">
-      <div className="flex items-center gap-2 flex-wrap">
+      <div className="flex items-center gap-2 flex-wrap print:hidden">
         <AddAssessmentButton category="WW" onAdd={(name, hps) => addAssessment.mutate({ category: "WW", name, hps })} />
         <AddAssessmentButton category="PT" onAdd={(name, hps) => addAssessment.mutate({ category: "PT", name, hps })} />
         {weights.st > 0 && (
           <AddAssessmentButton category="ST" onAdd={(name, hps) => addAssessment.mutate({ category: "ST", name, hps })} />
         )}
-        <div className="ml-auto text-xs text-muted-foreground">
-          Weights: WW {weights.ww * 100}% • PT {weights.pt * 100}% • ST {weights.st === 0 ? "N/A" : `${weights.st * 100}%`}
+        <div className="ml-auto flex items-center gap-2">
+          <span className="text-xs text-muted-foreground">
+            Weights: WW {weights.ww * 100}% • PT {weights.pt * 100}% • ST {weights.st === 0 ? "N/A" : `${weights.st * 100}%`}
+          </span>
+          <Button size="sm" variant="outline" onClick={() => window.print()}>
+            <Printer className="h-4 w-4 mr-1" /> Print Class Record
+          </Button>
         </div>
       </div>
 
-      <Card className="overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="text-xs border-collapse">
-            <thead>
-              <tr>
-                <th rowSpan={2} className="sticky left-0 z-10 bg-muted px-2 py-2 text-left border min-w-[180px]">LEARNERS' NAMES</th>
-                {activeCats.map((cat) => (
-                  <th
-                    key={cat}
-                    colSpan={byCat[cat].length + 2}
-                    className={`${CAT_BG[cat]} border px-2 py-1 text-center font-bold text-[11px] uppercase`}
-                  >
-                    {cat === "WW" && `Written / Oral Works (${Math.round(weights.ww * 100)}%)`}
-                    {cat === "PT" && `Product / Performance Tasks (${Math.round(weights.pt * 100)}%)`}
-                    {cat === "ST" && `Summative Tests & Term Examination (${Math.round(weights.st * 100)}%)`}
-                  </th>
-                ))}
-                <th rowSpan={2} className="bg-primary/10 border px-2 py-1 min-w-[60px]">Initial<br/>Grade</th>
-                <th rowSpan={2} className="bg-primary/10 border px-2 py-1 min-w-[60px]">Transmuted<br/>Grade</th>
-                <th rowSpan={2} className="bg-primary/10 border px-2 py-1 min-w-[80px]">Letter<br/>Grade</th>
-              </tr>
-              <tr>
-                {activeCats.map((cat) => (
-                  <Fragment key={cat}>
-                    {byCat[cat].map((a, i) => (
-                      <th key={a.id} className={`${CAT_BG[cat]} border px-1 py-1 min-w-[50px]`}>
-                        <div className="font-medium text-[11px]" title={a.name}>{i + 1}</div>
-                        <button onClick={() => { if (confirm(`Delete ${a.name}?`)) delAssessment.mutate(a.id); }} className="text-destructive text-[10px] hover:underline">×</button>
-                      </th>
-                    ))}
-                    <th className={`${CAT_BG[cat]} border px-1 py-1 min-w-[50px] text-[10px]`}>PS</th>
-                    <th className={`${CAT_BG[cat]} border px-1 py-1 min-w-[50px] text-[10px]`}>WS</th>
-                  </Fragment>
-                ))}
-              </tr>
-              <tr className="bg-muted/60 font-semibold">
-                <td className="sticky left-0 z-10 bg-muted/60 border px-2 py-1 text-[11px]">HIGHEST POSSIBLE SCORE</td>
-                {activeCats.map((cat) => {
-                  const totalHPS = byCat[cat].reduce((s, a) => s + Number(a.highest_score || 0), 0);
-                  return (
-                    <Fragment key={cat}>
-                      {byCat[cat].map((a) => (
-                        <td key={a.id} className={`${CAT_BG[cat]} border px-1 py-1 text-center font-mono`}>
-                          {a.highest_score}
-                        </td>
-                      ))}
-                      <td className={`${CAT_BG[cat]} border px-1 py-1 text-center font-mono`}>{totalHPS}</td>
-                      <td className={`${CAT_BG[cat]} border px-1 py-1 text-center font-mono`}>{Math.round(catWeight[cat] * 100)}%</td>
-                    </Fragment>
-                  );
-                })}
-                <td colSpan={3} className="bg-primary/10 border" />
-              </tr>
-            </thead>
-            <tbody>
-              {!!males.length && (
-                <tr className="bg-blue-100">
-                  <td colSpan={totalCols} className="border px-2 py-1 font-bold text-[11px] uppercase tracking-wide">Male</td>
-                </tr>
-              )}
-              {males.map((stu, i) => renderStudentRow(stu, i))}
-              {!!females.length && (
-                <tr className="bg-pink-100">
-                  <td colSpan={totalCols} className="border px-2 py-1 font-bold text-[11px] uppercase tracking-wide">Female</td>
-                </tr>
-              )}
-              {females.map((stu, i) => renderStudentRow(stu, i))}
-              {!students.length && (
-                <tr><td colSpan={totalCols} className="text-center text-muted-foreground py-8">Add students first.</td></tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+      <Card className="overflow-hidden p-3 md:p-4 print:border-0 print:shadow-none print:p-0">
+        <ClassRecordSheet
+          section={section}
+          term={term}
+          subjectType={subjectType}
+          students={students as any[]}
+          byCat={byCat}
+          scoreMap={scoreMap}
+          weights={weights}
+          trans={trans}
+          onSaveScore={saveScore}
+          onDeleteAssessment={(aid) => delAssessment.mutate(aid)}
+        />
       </Card>
     </div>
-  );
-}
-
-function ScoreCell({ initial, max, onSave }: { initial: number | null; max: number; onSave: (v: number | null) => void }) {
-  const [val, setVal] = useState(initial?.toString() ?? "");
-  const ref = useRef(initial);
-  useEffect(() => { setVal(initial?.toString() ?? ""); ref.current = initial; }, [initial]);
-
-  return (
-    <input
-      type="number"
-      value={val}
-      min={0}
-      max={max}
-      step="0.01"
-      onChange={(e) => setVal(e.target.value)}
-      onBlur={() => {
-        const num = val === "" ? null : Number(val);
-        if (num === ref.current) return;
-        if (num !== null && (Number.isNaN(num) || num < 0 || num > max)) {
-          toast.error(`Score must be 0–${max}`);
-          setVal(ref.current?.toString() ?? "");
-          return;
-        }
-        onSave(num);
-      }}
-      className="w-full px-1 py-1 text-center bg-transparent focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary text-xs"
-    />
   );
 }
 

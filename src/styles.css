@@ -143,7 +143,49 @@
   }
 }
 
-/* Globally hide the Lovable badge */
+@media print {
+  @page {
+    size: landscape;
+    margin: 0.4cm;
+  }
+
+  body {
+    background: white !important;
+  }
+
+  aside,
+  header,
+  [data-print-hide] {
+    display: none !important;
+  }
+
+  .print\:hidden {
+    display: none !important;
+  }
+
+  main {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: none !important;
+  }
+
+  #class-record-sheet {
+    width: 100%;
+  }
+
+  #class-record-sheet input {
+    border: none !important;
+    appearance: textfield;
+    -moz-appearance: textfield;
+  }
+
+  #class-record-sheet input::-webkit-outer-spin-button,
+  #class-record-sheet input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+}
+
 #lovable-badge,
 [id^="lovable-badge"],
 [class*="lovable-badge"],

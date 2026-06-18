@@ -104,6 +104,30 @@ export function letterGrade(g: number): string {
   return "Did Not Meet Expectations";
 }
 
+/** Single-letter grade shown on the printed DepEd class record (e.g. 84 → B). */
+export function shortLetterGrade(g: number): string {
+  if (g >= 90) return "A";
+  if (g >= 80) return "B";
+  if (g >= 75) return "C";
+  return "D";
+}
+
+export const TERM_LABELS = ["FIRST TERM", "SECOND TERM", "THIRD TERM"] as const;
+
+export function assessmentColumnLabel(
+  category: Category,
+  index: number,
+  count: number,
+): string {
+  if (category === "ST") {
+    if (count === 3) return (["SA1", "SA2", "TE"] as const)[index] ?? String(index + 1);
+    if (count === 2) return (["SA1", "TE"] as const)[index] ?? String(index + 1);
+    if (count === 1) return "TE";
+    return `SA${index + 1}`;
+  }
+  return String(index + 1);
+}
+
 export function remarks(g: number): "Passed" | "Failed" {
   return g >= 75 ? "Passed" : "Failed";
 }
