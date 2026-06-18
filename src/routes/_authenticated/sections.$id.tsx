@@ -595,7 +595,7 @@ function TermGrid({
               <tr>
                 <th className="sticky left-0 z-10 bg-muted px-2 py-2 text-left border min-w-[180px]">Student</th>
                 {(["WW", "PT", "ST"] as Category[]).filter((c) => c !== "ST" || weights.st > 0).map((cat) => (
-                  <>
+                  <Fragment key={cat}>
                     {byCat[cat].map((a) => (
                       <th key={a.id} className={`${CAT_BG[cat]} border px-1 py-1 min-w-[70px]`}>
                         <div className="font-medium text-[11px] truncate max-w-[80px]" title={a.name}>{a.name}</div>
@@ -605,7 +605,7 @@ function TermGrid({
                     ))}
                     <th className={`${CAT_BG[cat]} border px-1 py-1 min-w-[50px] text-[10px]`}>PS</th>
                     <th className={`${CAT_BG[cat]} border px-1 py-1 min-w-[50px] text-[10px]`}>WS</th>
-                  </>
+                  </Fragment>
                 ))}
                 <th className="bg-primary/10 border px-2 py-1 min-w-[60px]">Initial</th>
                 <th className="bg-primary/10 border px-2 py-1 min-w-[60px]">Final</th>
