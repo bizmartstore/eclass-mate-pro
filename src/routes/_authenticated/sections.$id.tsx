@@ -8,6 +8,7 @@ import {
   ArrowLeft,
   Save,
   Printer,
+  Pencil,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -131,15 +132,22 @@ function StudentsTab({ sectionId }: { sectionId: string }) {
     },
   });
 
-  const filtered = students.filter((s) => {
-    const q = search.toLowerCase();
-    return (
-      !q ||
-      s.last_name.toLowerCase().includes(q) ||
-      s.first_name.toLowerCase().includes(q) ||
-      (s.lrn ?? "").toLowerCase().includes(q)
-    );
-  });
+  const filtered = students
+    .filter((s) => {
+      const q = search.toLowerCase();
+      return (
+        !q ||
+        s.last_name.toLowerCase().includes(q) ||
+        s.first_name.toLowerCase().includes(q) ||
+        (s.lrn ?? "").toLowerCase().includes(q)
+      );
+    })
+    .sort((a, b) => {
+      const sa = (a.sex ?? "M").toUpperCase() === "F" ? 1 : 0;
+      const sb = (b.sex ?? "M").toUpperCase() === "F" ? 1 : 0;
+      if (sa !== sb) return sa - sb;
+      return a.last_name.localeCompare(b.last_name);
+    });
 
   const save = useMutation({
     mutationFn: async () => {
@@ -294,14 +302,46 @@ function StudentsTab({ sectionId }: { sectionId: string }) {
             </thead>
             <tbody>
               {filtered.map((s, i) => (
-                <tr key={s.id} className="border-t">
+                <tr key={s.id} className={`border-t ${(s.sex ?? "M").toUpperCase() === "F" ? "bg-pink-50/40" : ""}`}>
                   <td className="px-3 py-2 text-muted-foreground">{i + 1}</td>
                   <td className="px-3 py-2 font-mono text-xs">{s.lrn ?? "—"}</td>
                   <td className="px-3 py-2 font-medium">{s.last_name}</td>
                   <td className="px-3 py-2">{s.first_name}</td>
                   <td className="px-3 py-2">{s.middle_name ?? ""}</td>
-                  <td className="px-3 py-2">{s.sex}</td>
-                  <td className="px-3 py-2 text-right">
+                  <td className="px-3 py-2">
+                    <Select
+                      value={(s.sex ?? "M").toUpperCase()}
+                      onValueChange={async (v) => {
+                        const { error } = await supabase.from("students").update({ sex: v }).eq("id", s.id);
+                        if (error) return toast.error(error.message);
+                        qc.invalidateQueries({ queryKey: ["students", sectionId] });
+                      }}
+                    >
+                      <SelectTrigger className="h-8 w-20"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="M">Male</SelectItem>
+                        <SelectItem value="F">Female</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </td>
+                  <td className="px-3 py-2 text-right whitespace-nowrap">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        setForm({
+                          id: s.id,
+                          lrn: s.lrn ?? "",
+                          last_name: s.last_name,
+                          first_name: s.first_name,
+                          middle_name: s.middle_name ?? "",
+                          sex: (s.sex ?? "M").toUpperCase(),
+                        });
+                        setOpen(true);
+                      }}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
                     <Button size="sm" variant="ghost" onClick={() => { if (confirm("Delete student?")) del.mutate(s.id); }}>
                       <Trash2 className="h-4 w-4" />
                     </Button>
