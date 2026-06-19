@@ -30,10 +30,14 @@ function ScoreCell({
   initial,
   max,
   onSave,
+  onFocus,
+  onBlur,
 }: {
   initial: number | null;
   max: number;
   onSave: (v: number | null) => void;
+  onFocus?: () => void;
+  onBlur?: () => void;
 }) {
   const [val, setVal] = useState(initial?.toString() ?? "");
   const ref = useRef(initial);
@@ -50,7 +54,9 @@ function ScoreCell({
       max={max}
       step="0.01"
       onChange={(e) => setVal(e.target.value)}
+      onFocus={onFocus}
       onBlur={() => {
+        onBlur?.();
         const num = val === "" ? null : Number(val);
         if (num === ref.current) return;
         if (num !== null && (Number.isNaN(num) || num < 0 || num > max)) {
@@ -58,12 +64,22 @@ function ScoreCell({
           setVal(ref.current?.toString() ?? "");
           return;
         }
+        if (ref.current !== null && ref.current !== undefined) {
+          const ok = confirm(
+            `Replace existing score ${ref.current} with ${num === null ? "(blank)" : num}?`,
+          );
+          if (!ok) {
+            setVal(ref.current?.toString() ?? "");
+            return;
+          }
+        }
         onSave(num);
       }}
       className="w-full min-w-[36px] px-0.5 py-0.5 text-center bg-transparent focus:bg-white focus:outline-none focus:ring-1 focus:ring-primary text-[10px] font-mono print:bg-transparent print:ring-0"
     />
   );
 }
+
 
 export interface ClassRecordSheetProps {
   section: Record<string, unknown>;
@@ -116,13 +132,23 @@ export function ClassRecordSheet({
     activeCats.reduce((acc, c) => acc + byCat[c].length + 3, 0) +
     3;
 
+  const [focusedId, setFocusedId] = useState<string | null>(null);
+
   const renderStudentRow = (stu: (typeof students)[0], idx: number) => {
     const sScores = scoreMap[stu.id] ?? {};
     const r = computeTerm(sScores, byCat, weights, trans);
+    const isFocused = focusedId === stu.id;
     return (
-      <tr key={stu.id}>
+      <tr
+        key={stu.id}
+        className={isFocused ? "bg-yellow-200 print:bg-transparent" : ""}
+      >
         <td className={`${cell} text-center w-8`}>{idx + 1}</td>
-        <td className={`${cell} text-left font-medium whitespace-nowrap min-w-[160px]`}>
+        <td
+          className={`${cell} text-left font-medium whitespace-nowrap min-w-[160px] ${
+            isFocused ? "bg-yellow-300 print:bg-transparent" : ""
+          }`}
+        >
           {formatStudentName(stu)}
         </td>
         {activeCats.map((cat) => {
@@ -136,6 +162,10 @@ export function ClassRecordSheet({
                     initial={sScores[a.id] ?? null}
                     max={a.highest_score}
                     onSave={(v) => onSaveScore(stu.id, a.id, v)}
+                    onFocus={() => setFocusedId(stu.id)}
+                    onBlur={() =>
+                      setFocusedId((cur) => (cur === stu.id ? null : cur))
+                    }
                   />
                 </td>
               ))}
@@ -163,6 +193,7 @@ export function ClassRecordSheet({
       </tr>
     );
   };
+
 
   return (
     <div
