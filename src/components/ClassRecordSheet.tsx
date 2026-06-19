@@ -132,13 +132,23 @@ export function ClassRecordSheet({
     activeCats.reduce((acc, c) => acc + byCat[c].length + 3, 0) +
     3;
 
+  const [focusedId, setFocusedId] = useState<string | null>(null);
+
   const renderStudentRow = (stu: (typeof students)[0], idx: number) => {
     const sScores = scoreMap[stu.id] ?? {};
     const r = computeTerm(sScores, byCat, weights, trans);
+    const isFocused = focusedId === stu.id;
     return (
-      <tr key={stu.id}>
+      <tr
+        key={stu.id}
+        className={isFocused ? "bg-yellow-200 print:bg-transparent" : ""}
+      >
         <td className={`${cell} text-center w-8`}>{idx + 1}</td>
-        <td className={`${cell} text-left font-medium whitespace-nowrap min-w-[160px]`}>
+        <td
+          className={`${cell} text-left font-medium whitespace-nowrap min-w-[160px] ${
+            isFocused ? "bg-yellow-300 print:bg-transparent" : ""
+          }`}
+        >
           {formatStudentName(stu)}
         </td>
         {activeCats.map((cat) => {
@@ -152,6 +162,10 @@ export function ClassRecordSheet({
                     initial={sScores[a.id] ?? null}
                     max={a.highest_score}
                     onSave={(v) => onSaveScore(stu.id, a.id, v)}
+                    onFocus={() => setFocusedId(stu.id)}
+                    onBlur={() =>
+                      setFocusedId((cur) => (cur === stu.id ? null : cur))
+                    }
                   />
                 </td>
               ))}
@@ -179,6 +193,7 @@ export function ClassRecordSheet({
       </tr>
     );
   };
+
 
   return (
     <div
