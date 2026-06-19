@@ -132,15 +132,22 @@ function StudentsTab({ sectionId }: { sectionId: string }) {
     },
   });
 
-  const filtered = students.filter((s) => {
-    const q = search.toLowerCase();
-    return (
-      !q ||
-      s.last_name.toLowerCase().includes(q) ||
-      s.first_name.toLowerCase().includes(q) ||
-      (s.lrn ?? "").toLowerCase().includes(q)
-    );
-  });
+  const filtered = students
+    .filter((s) => {
+      const q = search.toLowerCase();
+      return (
+        !q ||
+        s.last_name.toLowerCase().includes(q) ||
+        s.first_name.toLowerCase().includes(q) ||
+        (s.lrn ?? "").toLowerCase().includes(q)
+      );
+    })
+    .sort((a, b) => {
+      const sa = (a.sex ?? "M").toUpperCase() === "F" ? 1 : 0;
+      const sb = (b.sex ?? "M").toUpperCase() === "F" ? 1 : 0;
+      if (sa !== sb) return sa - sb;
+      return a.last_name.localeCompare(b.last_name);
+    });
 
   const save = useMutation({
     mutationFn: async () => {
