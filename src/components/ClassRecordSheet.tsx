@@ -30,10 +30,14 @@ function ScoreCell({
   initial,
   max,
   onSave,
+  onFocus,
+  onBlur,
 }: {
   initial: number | null;
   max: number;
   onSave: (v: number | null) => void;
+  onFocus?: () => void;
+  onBlur?: () => void;
 }) {
   const [val, setVal] = useState(initial?.toString() ?? "");
   const ref = useRef(initial);
@@ -50,7 +54,9 @@ function ScoreCell({
       max={max}
       step="0.01"
       onChange={(e) => setVal(e.target.value)}
+      onFocus={onFocus}
       onBlur={() => {
+        onBlur?.();
         const num = val === "" ? null : Number(val);
         if (num === ref.current) return;
         if (num !== null && (Number.isNaN(num) || num < 0 || num > max)) {
@@ -58,12 +64,22 @@ function ScoreCell({
           setVal(ref.current?.toString() ?? "");
           return;
         }
+        if (ref.current !== null && ref.current !== undefined) {
+          const ok = confirm(
+            `Replace existing score ${ref.current} with ${num === null ? "(blank)" : num}?`,
+          );
+          if (!ok) {
+            setVal(ref.current?.toString() ?? "");
+            return;
+          }
+        }
         onSave(num);
       }}
       className="w-full min-w-[36px] px-0.5 py-0.5 text-center bg-transparent focus:bg-white focus:outline-none focus:ring-1 focus:ring-primary text-[10px] font-mono print:bg-transparent print:ring-0"
     />
   );
 }
+
 
 export interface ClassRecordSheetProps {
   section: Record<string, unknown>;
