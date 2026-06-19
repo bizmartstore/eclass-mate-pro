@@ -5,17 +5,31 @@ export type SubjectType =
   | "ACADEMIC_ELECTIVE"
   | "ACADEMIC_ELECTIVE_FAS"
   | "TECHPRO_ELECTIVE"
-  | "TECHPRO_WORK_IMMERSION";
+  | "TECHPRO_WORK_IMMERSION"
+  | "OLD_CORE"
+  | "OLD_ACADEMIC"
+  | "OLD_WORK_IMMERSION"
+  | "OLD_TVL_SPORTS_ARTS";
 
 export const SUBJECT_TYPES: { value: SubjectType; label: string }[] = [
-  { value: "CORE", label: "Core Subject" },
-  { value: "ACADEMIC_ELECTIVE", label: "Academic Elective" },
+  { value: "CORE", label: "New: Core Subject (20/50/30)" },
+  { value: "ACADEMIC_ELECTIVE", label: "New: Academic Elective (20/50/30)" },
   {
     value: "ACADEMIC_ELECTIVE_FAS",
-    label: "Academic Elective (Field Experience / Sports / Arts)",
+    label: "New: Academic Elective – Field Exp./Sports/Arts (15/70/15)",
   },
-  { value: "TECHPRO_ELECTIVE", label: "TechPro Elective" },
-  { value: "TECHPRO_WORK_IMMERSION", label: "TechPro Work Immersion" },
+  { value: "TECHPRO_ELECTIVE", label: "New: TechPro Elective (15/65/20)" },
+  { value: "TECHPRO_WORK_IMMERSION", label: "New: TechPro Work Immersion (20/80/0)" },
+  { value: "OLD_CORE", label: "Old: Core Subjects – All Tracks (25/50/25)" },
+  { value: "OLD_ACADEMIC", label: "Old: Academic Track except Immersion (25/45/30)" },
+  {
+    value: "OLD_WORK_IMMERSION",
+    label: "Old: Work Immersion / Culminating Activity – Academic (35/40/25)",
+  },
+  {
+    value: "OLD_TVL_SPORTS_ARTS",
+    label: "Old: TVL / Sports / Arts and Design Track (20/60/20)",
+  },
 ];
 
 export interface Weights {
@@ -35,6 +49,14 @@ export function getWeights(t: SubjectType): Weights {
       return { ww: 0.15, pt: 0.65, st: 0.2 };
     case "TECHPRO_WORK_IMMERSION":
       return { ww: 0.2, pt: 0.8, st: 0 };
+    case "OLD_CORE":
+      return { ww: 0.25, pt: 0.5, st: 0.25 };
+    case "OLD_ACADEMIC":
+      return { ww: 0.25, pt: 0.45, st: 0.3 };
+    case "OLD_WORK_IMMERSION":
+      return { ww: 0.35, pt: 0.4, st: 0.25 };
+    case "OLD_TVL_SPORTS_ARTS":
+      return { ww: 0.2, pt: 0.6, st: 0.2 };
   }
 }
 
