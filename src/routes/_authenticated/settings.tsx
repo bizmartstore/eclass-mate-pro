@@ -244,7 +244,40 @@ function SettingsPage() {
         </CardContent>
       </Card>
 
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2"><Database className="h-5 w-5" /> Backup & Restore</CardTitle>
+          <CardDescription>
+            Export all your sections, students, assessments and scores to a JSON file. Import a backup later to restore your data on any device.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-wrap gap-3">
+          <Button onClick={handleExport} disabled={backupBusy}>
+            <Download className="h-4 w-4 mr-2" /> {backupBusy ? "Working..." : "Export Backup (JSON)"}
+          </Button>
+          <Button variant="outline" onClick={() => fileRef.current?.click()} disabled={backupBusy}>
+            <Upload className="h-4 w-4 mr-2" /> Import Backup
+          </Button>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="application/json,.json"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (!f) return;
+              if (confirm("Import will ADD the backup's sections, students, assessments and scores to your current account. Continue?")) {
+                handleImportFile(f);
+              } else if (fileRef.current) {
+                fileRef.current.value = "";
+              }
+            }}
+          />
+        </CardContent>
+      </Card>
+
       <Card className="border-destructive/30">
+
         <CardHeader>
           <CardTitle className="text-destructive flex items-center gap-2">
             <AlertTriangle className="h-5 w-5" /> Danger Zone
